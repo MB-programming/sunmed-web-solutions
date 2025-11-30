@@ -17,12 +17,7 @@ const SideBar = () => {
       link: "/admin",
     },
     {
-      title: "Clients",
-      icon: "ph:user-bold",
-      link: "/admin/clients",
-    },
-    {
-      title: "Projects manage",
+      title: "Projects",
       icon: "bytesize:work",
       link: "/admin/projects",
     },
@@ -32,26 +27,46 @@ const SideBar = () => {
       link: "/admin/services",
     },
     {
-      title: "Content manage",
-      icon: "streamline-ultimate:layout-content",
-      link: "/admin/content",
+      title: "FAQs",
+      icon: "mdi:help-circle",
+      link: "/admin/faqs/manage",
     },
     {
-      title: "Invoices",
-      icon: "stash:invoice",
-      link: "/admin/invoices",
+      title: "Benefits",
+      icon: "mdi:star",
+      link: "/admin/benefits/manage",
     },
     {
-      title: "Support",
-      icon: "icon-park-outline:message",
-      link: "/admin/support",
+      title: "Attributes",
+      icon: "mdi:tag",
+      link: "/admin/attributes/manage",
+    },
+    {
+      title: "Bookings",
+      icon: "mdi:book",
+      link: "/admin/books/manage",
+    },
+    {
+      title: "Steps",
+      icon: "mdi:stairs",
+      link: "/admin/steps/manage",
+    },
+    {
+      title: "Futures",
+      icon: "mdi:rocket",
+      link: "/admin/futures/manage",
+    },
+    {
+      title: "Users",
+      icon: "ph:user-bold",
+      link: "/admin/users/manage",
     },
     {
       title: "Settings",
       icon: "lets-icons:setting-line",
       link: "/admin/settings",
     },
-  
+
   ];
   return (
     <div className="  SideBar py-12 ">
@@ -62,12 +77,12 @@ const SideBar = () => {
       {
         SideData.map((data , index)=>(
           <>
-          <Link href={data.link} className={`flex ${index === 7 && "mt-60"} ${pathname === data.link && "bg-main"} mt-1  items-center gap-2 px-5 py-3 cursor-pointer group  hover:bg-main duration-200 rounded-sm`}>
+          <Link href={data.link} className={`flex ${index === 10 && "mt-auto"} ${pathname === data.link && "bg-main"} mt-1  items-center gap-2 px-5 py-3 cursor-pointer group  hover:bg-main duration-200 rounded-sm`}>
           <Icon icon={data.icon} width="16" height="16" className={`text-body ${pathname === data.link && "!text-black"} group-hover:text-black duration-200`} />
             <p className={`text-[0.9rem]  text-body group-hover:text-black duration-200 ${pathname === data.link && "!text-black"}`}>{data.title}</p>
           </Link>
           {
-            index === 3 && <div>      <button
+            index === 9 && <div>      <button
             onClick={() => setOpen((prev) => !prev)}
             className={`flex items-center mt-1 justify-between gap-2 group duration-300 cursor-pointer hover:bg-main w-full px-5 py-3 rounded-sm ${
               open && "bg-main"

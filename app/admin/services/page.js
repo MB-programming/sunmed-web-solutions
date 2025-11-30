@@ -1,110 +1,197 @@
-"use client"
-import Table from "@/app/Components/Table/Table";
-import Axios from "@/app/lib/Axios";
-import { Icon } from "@iconify/react";
-import Link from "next/link";
-import React, { useEffect } from "react";
+'use client';
+
+import React, { useState } from 'react';
+import { Icon } from '@iconify/react';
+import { useServices, useCreateService, useUpdateService, useDeleteService } from '@/app/lib/hooks';
+import DataTable from '@/app/Components/Common/DataTable';
+import Modal from '@/app/Components/Common/Modal';
+import { Input, Textarea, Button } from '@/app/Components/Common/FormInput';
 
 const Page = () => {
-  useEffect(()=>{
-    Axios.get("/services").then(data => console.log(data))
-  },[])
-  const headers = [
-    {
-      title: "name",
-      key: "name",
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingService, setEditingService] = useState(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    icon: '',
+    features: '',
+  });
+
+  const { data: servicesData, loading, refetch } = useServices();
+  const services = servicesData?.data || [];
+
+  const { mutate: createService, loading: creating } = useCreateService({
+    onSuccess: () => {
+      refetch();
+      handleCloseModal();
     },
-    {
-      title: "Email",
-      key: "name",
+  });
+
+  const { mutate: updateService, loading: updating } = useUpdateService({
+    onSuccess: () => {
+      refetch();
+      handleCloseModal();
     },
-    {
-      title: "Phone number",
-      key: "name",
+  });
+
+  const { mutate: deleteService } = useDeleteService({
+    onSuccess: () => {
+      refetch();
     },
+  });
+
+  const handleOpenModal = (service = null) => {
+    if (service) {
+      setEditingService(service);
+      setFormData({
+        name: service.name || '',
+        description: service.description || '',
+        icon: service.icon || '',
+        features: service.features || '',
+      });
+    } else {
+      setEditingService(null);
+      setFormData({
+        name: '',
+        description: '',
+        icon: '',
+        features: '',
+      });
+    }
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingService(null);
+    setFormData({
+      name: '',
+      description: '',
+      icon: '',
+      features: '',
+    });
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      if (editingService) {
+        await updateService(editingService.id, formData);
+      } else {
+        await createService(formData);
+      }
+    } catch (error) {
+      console.error('Error saving service:', error);
+    }
+  };
+
+  const handleDelete = async (service) => {
+    if (window.confirm(`Are you sure you want to delete "${service.name}"?`)) {
+      try {
+        await deleteService(service.id);
+      } catch (error) {
+        console.error('Error deleting service:', error);
+      }
+    }
+  };
+
+  const columns = [
+    { header: 'ID', field: 'id' },
+    { header: 'Name', field: 'name' },
     {
-      title: "Projects",
-      key: "name",
+      header: 'Description',
+      render: (row) => (
+        <div className="max-w-xs truncate">{row.description}</div>
+      ),
     },
+    { header: 'Icon', field: 'icon' },
     {
-      title: "Status",
-      key: "name",
+      header: 'Created At',
+      render: (row) => new Date(row.created_at).toLocaleDateString(),
     },
   ];
-  const filters = [
-    {
-      text: "All",
-      value: "all",
-    },
-    {
-      text: "Active",
-      value: "all",
-    },
-    {
-      text: "Inactive",
-      value: "all",
-    },
-  ];
-  const cards = [
-    {
-      title: "Total Clients",
-      value: "120",
-    },
-    {
-      title: "Active Projects",
-      value: "120",
-    },
-    {
-      title: "Pending requests",
-      value: "120",
-    },
-  ];
+
   return (
-    <div className="mt-3">
-    
-      <h3 className="text-white mt-5 text-[1.2rem] font-bold">Services </h3>
-      <div className="mt-4 bg-background2 rounded-lg p-5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center px-4 bg-white/5 justify-start gap-3 flex-row-reverse border rounded w-[230px] h-max border-stroke">
-              <input
-                type="text"
-                placeholder="search"
-                className="flex-1 border-none outline-none text-white bg-transparent p-2"
-              />
-              <Icon
-                className="text-body"
-                icon="ep:search"
-                width="18"
-                height="18"
-              />
-            </div>
-            <div className="flex items-center gap-2 border border-stroke bg-white/5 rounded p-1">
-              {filters.map((data, index) => (
-                <button
-                  key={index}
-                  className="text-[0.8rem] text-body px-8 py-2 hover:text-white hover:bg-background2 duration-200"
-                >
-                  {data.text}
-                </button>
-              ))}
-            </div>
-          </div>
-          <Link
-            href="/admin/services/add"
-            className="flex items-center gap-3 py-2 px-4 rounded text-white hover:bg-main hover:text-white duration-500 hover:shadow-light border border-main"
-          >
-            <Icon icon="ic:sharp-add" width="18" height="18" />
-            <span>Add new services</span>
-          </Link>
+    <div className="mt-4">
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-2">
+          <Icon className="text-main" icon="mdi:cog" width="24" height="24" />
+          <h3 className="text-white text-[1.2rem] font-bold">Manage Services</h3>
         </div>
-        <Table
-          headers={headers}
-          action
-          editLink="/admin/services/edit/id"
-          viewLink="/admin/services/view/id"
+        <Button onClick={() => handleOpenModal()}>
+          <Icon icon="mdi:plus" width="20" height="20" className="inline mr-2" />
+          Add New Service
+        </Button>
+      </div>
+
+      <div className="bg-background2 rounded-lg p-5">
+        <DataTable
+          data={services}
+          columns={columns}
+          loading={loading}
+          onEdit={handleOpenModal}
+          onDelete={handleDelete}
         />
       </div>
+
+      <Modal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        title={editingService ? 'Edit Service' : 'Add New Service'}
+        size="lg"
+      >
+        <form onSubmit={handleSubmit}>
+          <Input
+            label="Service Name"
+            name="name"
+            value={formData.name}
+            onChange={handleInputChange}
+            placeholder="Enter service name"
+            required
+          />
+
+          <Textarea
+            label="Description"
+            name="description"
+            value={formData.description}
+            onChange={handleInputChange}
+            placeholder="Enter service description"
+            rows={5}
+          />
+
+          <Input
+            label="Icon"
+            name="icon"
+            value={formData.icon}
+            onChange={handleInputChange}
+            placeholder="Icon name or class"
+          />
+
+          <Textarea
+            label="Features (JSON or text)"
+            name="features"
+            value={formData.features}
+            onChange={handleInputChange}
+            placeholder="Enter features"
+            rows={4}
+          />
+
+          <div className="flex items-center gap-3 mt-6">
+            <Button type="submit" variant="primary" loading={creating || updating}>
+              {editingService ? 'Update Service' : 'Create Service'}
+            </Button>
+            <Button type="button" variant="secondary" onClick={handleCloseModal}>
+              Cancel
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 };

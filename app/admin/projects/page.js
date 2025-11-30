@@ -1,101 +1,260 @@
-import Axios from "@/app/lib/Axios";
-import { Icon } from "@iconify/react";
-import Link from "next/link";
-import React from "react";
+'use client';
 
-const Page = async() => {
-  const {data} = await Axios.get('/projects')
+import React, { useState } from 'react';
+import { Icon } from '@iconify/react';
+import { useProjects, useCreateProject, useUpdateProject, useDeleteProject } from '@/app/lib/hooks';
+import DataTable from '@/app/Components/Common/DataTable';
+import Modal from '@/app/Components/Common/Modal';
+import { Input, Textarea, FileInput, Button } from '@/app/Components/Common/FormInput';
 
-  
-  const filters = [
+const Page = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingProject, setEditingProject] = useState(null);
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    image: null,
+    category: '',
+    client: '',
+    duration: '',
+  });
+
+  // Fetch projects
+  const { data: projectsData, loading, refetch } = useProjects();
+  const projects = projectsData?.data || [];
+
+  // Mutations
+  const { mutate: createProject, loading: creating } = useCreateProject({
+    onSuccess: () => {
+      refetch();
+      handleCloseModal();
+    },
+  });
+
+  const { mutate: updateProject, loading: updating } = useUpdateProject({
+    onSuccess: () => {
+      refetch();
+      handleCloseModal();
+    },
+  });
+
+  const { mutate: deleteProject } = useDeleteProject({
+    onSuccess: () => {
+      refetch();
+    },
+  });
+
+  const handleOpenModal = (project = null) => {
+    if (project) {
+      setEditingProject(project);
+      setFormData({
+        title: project.title || '',
+        description: project.description || '',
+        category: project.category || '',
+        client: project.client || '',
+        duration: project.duration || '',
+        image: null,
+      });
+    } else {
+      setEditingProject(null);
+      setFormData({
+        title: '',
+        description: '',
+        image: null,
+        category: '',
+        client: '',
+        duration: '',
+      });
+    }
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingProject(null);
+    setFormData({
+      title: '',
+      description: '',
+      image: null,
+      category: '',
+      client: '',
+      duration: '',
+    });
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value, files } = e.target;
+    if (files) {
+      setFormData(prev => ({ ...prev, [name]: files[0] }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const data = new FormData();
+    Object.keys(formData).forEach(key => {
+      if (formData[key] !== null && formData[key] !== '') {
+        data.append(key, formData[key]);
+      }
+    });
+
+    try {
+      if (editingProject) {
+        await updateProject(editingProject.id, data);
+      } else {
+        await createProject(data);
+      }
+    } catch (error) {
+      console.error('Error saving project:', error);
+    }
+  };
+
+  const handleDelete = async (project) => {
+    if (window.confirm(`Are you sure you want to delete "${project.title}"?`)) {
+      try {
+        await deleteProject(project.id);
+      } catch (error) {
+        console.error('Error deleting project:', error);
+      }
+    }
+  };
+
+  const columns = [
     {
-      text: "all",
-      value: "all",
+      header: 'ID',
+      field: 'id',
     },
     {
-      text: "accepted",
-      value: "all",
+      header: 'Title',
+      field: 'title',
     },
     {
-      text: "pending",
-      value: "all",
+      header: 'Category',
+      field: 'category',
     },
     {
-      text: "declined",
-      value: "all",
+      header: 'Client',
+      field: 'client',
+    },
+    {
+      header: 'Duration',
+      field: 'duration',
+    },
+    {
+      header: 'Created At',
+      field: 'created_at',
+      render: (row) => new Date(row.created_at).toLocaleDateString(),
     },
   ];
+
   return (
-    <div className="mt-3">
-      <h3 className="text-white text-[1.4rem] font-bold">Project manage</h3>
-      <div className="flex items-center justify-between mt-5">
-        <div className="flex items-center gap-3 ">
-          <div className="flex items-center px-4 justify-start gap-3 flex-row-reverse  rounded w-[300px] h-max bg-white/5 border border-stroke">
-            <input
-              type="text"
-              placeholder="search"
-              className="flex-1 border-none outline-none text-textColor bg-transparent p-2"
-            />
-            <Icon
-              className="text-body"
-              icon="ep:search"
-              width="18"
-              height="18"
-            />
-          </div>
-          <div className="flex items-center gap-2 bg-white/5 border border-stroke rounded p-2">
-            {filters.map((data, index) => (
-              <button
-                key={index}
-                className="text-[0.8rem] text-body px-5 py-1 hover:text-white hover:bg-background duration-200"
-              >
-                {data.text}
-              </button>
-            ))}
-          </div>
+    <div className="mt-4">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-2">
+          <Icon
+            className="text-main"
+            icon="carbon:ibm-cloud-projects"
+            width="24"
+            height="24"
+          />
+          <h3 className="text-white text-[1.2rem] font-bold">Manage Projects</h3>
         </div>
-        <Link
-          href="/admin/projects/add"
-          className="flex items-center gap-3 py-2 px-4 rounded text-black bg-main hover-main duration-500  border border-main"
-        >
-          <Icon icon="ic:sharp-add" width="18" height="18" />
-          <span>Add new project</span>
-        </Link>
+        <Button onClick={() => handleOpenModal()}>
+          <Icon icon="mdi:plus" width="20" height="20" className="inline mr-2" />
+          Add New Project
+        </Button>
       </div>
-      <div className="mt-7 flex items-center flex-wrap gap-4">
-        {data?.data.map((data, index) => (
-          <div
-          
-            className="flex-1 min-w-[300px] py-5 px-3 border bg-background2 border-stroke rounded-lg"
-          >
-            <span
-              className={` ${
-                data.status === "completed"
-                  ? "bg-[#3952AA] border-[#3952AA]"
-                  : data.status === "pending"
-                  ? "bg-[#BAA219] border-[#BAA219] !text-textColor"
-                  : data.status === "in_progress" &&
-                    "bg-[#6CAF80] !bg-opacity-100 border-[#2F8E4C]"
-              } bg-opacity-80  capitalize px-6 py-1 text-[0.7rem] font-medium text-white rounded-3xl border`}
+
+      {/* Table */}
+      <div className="bg-background2 rounded-lg p-5">
+        <DataTable
+          data={projects}
+          columns={columns}
+          loading={loading}
+          onEdit={handleOpenModal}
+          onDelete={handleDelete}
+        />
+      </div>
+
+      {/* Modal */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        title={editingProject ? 'Edit Project' : 'Add New Project'}
+        size="lg"
+      >
+        <form onSubmit={handleSubmit}>
+          <Input
+            label="Project Title"
+            name="title"
+            value={formData.title}
+            onChange={handleInputChange}
+            placeholder="Enter project title"
+            required
+          />
+
+          <Textarea
+            label="Description"
+            name="description"
+            value={formData.description}
+            onChange={handleInputChange}
+            placeholder="Enter project description"
+            rows={5}
+          />
+
+          <Input
+            label="Category"
+            name="category"
+            value={formData.category}
+            onChange={handleInputChange}
+            placeholder="e.g., Web Development, Mobile App"
+          />
+
+          <Input
+            label="Client"
+            name="client"
+            value={formData.client}
+            onChange={handleInputChange}
+            placeholder="Client name"
+          />
+
+          <Input
+            label="Duration"
+            name="duration"
+            value={formData.duration}
+            onChange={handleInputChange}
+            placeholder="e.g., 3 months, 6 weeks"
+          />
+
+          <FileInput
+            label="Project Image"
+            name="image"
+            onChange={handleInputChange}
+            accept="image/*"
+          />
+
+          <div className="flex items-center gap-3 mt-6">
+            <Button
+              type="submit"
+              variant="primary"
+              loading={creating || updating}
             >
-              {data.status}
-            </span>
-            <h4 className="text-white text-base font-medium mt-4">{data.title}</h4>
-            <p className="mt-4 text-[0.85rem] font-medium  text-white">Client: {data.client_name}</p>
-            <p className=" text-[0.85rem] font-medium mt-2 text-white">Start: {data.start_date}</p>
-            <p className=" text-[0.85rem] font-medium mt-2 text-white">Deadline : {data.end_date}</p>
-            <p className="mt-5 text-body text-[0.75rem] font-light max-w-[215px]">
-              {data.title}
-            </p>
-            <div className="mt-5 flex items-center justify-end gap-4">
-              <Link href={`/admin/projects/view/${data.slug}`} className="flex items-center justify-center gap-3 hover-main hover:bg-main hover:border-main hover:text-white/5 p-2 hover:shadow-light duration-300 bg-transparent rounded-sm border border-stroke px-10 w-max">
-              <span className="text-white text-[0.8rem] font-medium">View details</span>
-              </Link>
-          
-            </div>
+              {editingProject ? 'Update Project' : 'Create Project'}
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleCloseModal}
+            >
+              Cancel
+            </Button>
           </div>
-        ))}
-      </div>
+        </form>
+      </Modal>
     </div>
   );
 };
