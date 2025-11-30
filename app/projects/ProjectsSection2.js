@@ -10,48 +10,26 @@ import "swiper/css";
 import "swiper/css/navigation";
 import { useGSAP } from "@gsap/react";
 import Link from "next/link";
+import { useProjects } from "@/app/lib/hooks";
+import LoadingSpinner from "../Components/Common/LoadingSpinner";
 
 gsap.registerPlugin(ScrollTrigger);
 
 const ProjectsSection2 = () => {
   const [resize  , setResize] = useState();
+  const { data: projectsData, loading } = useProjects();
+  const projects = projectsData?.data || [];
+
   useEffect(()=>{
     if (typeof window !== "undefined") {
        setResize((85 / 100) * window.innerWidth);
 
-    
+
       window.addEventListener("resize" , ()=> setResize(window.innerWidth))
       return ()=> window.removeEventListener("resize" , ()=> setResize(window.innerWidth))
     }
   },[])
   const sectionRef = useRef(null);
-
-  const BoxesData = [
-    {
-      id: 1,
-      title: "UI Design",
-      description:
-        "We craft user focused designs that combine creativity, functionality, and seamless experiences.",
-    },
-    {
-      id: 2,
-      title: "Web Development",
-      description:
-        "We build fast, scalable, and secure websites & apps tailored to your business goals.",
-    },
-    {
-      id: 3,
-      title: "Web Apps",
-      description:
-        "We create custom WordPress websites that are easy to manage, fast, and fully responsive.",
-    },
-    {
-      id: 4,
-      title: "UX Design",
-      description:
-        "We design smooth and intuitive experiences that delight your users.",
-    },
-  ];
 
   useGSAP(() => {
     const boxes = sectionRef.current.querySelectorAll(".service-box");
@@ -111,47 +89,60 @@ const ProjectsSection2 = () => {
         </div>
 
         {/* Swiper */}
-        <Swiper
-          spaceBetween={30}
-          slidesPerView={resize > 820 ? 4 : 1.2}
-          navigation={{ nextEl: ".right-btn", prevEl: ".left-btn" }}
-          modules={[Navigation]}
-          className="mySwiper"
-        >
-          {BoxesData.map((data) => (
-            <SwiperSlide key={data.id}>
-              <Link href='/projects/details' className="service-box  relative border border-stroke p-3 w-full h-[26rem] overflow-hidden rounded-2xl shadow-lg cursor-pointer flex justify-center items-center group transition-all duration-700 z-10">
-                {/* Background image */}
-                <img
-                  src="/project-ex.png"
-                  className="absolute h-full w-full top-0 left-0 object-cover rounded-2xl transition-transform duration-700 group-hover:scale-110 group-hover:rotate-1"
-                />
+        {loading ? (
+          <div className="py-12">
+            <LoadingSpinner size="lg" />
+          </div>
+        ) : projects.length > 0 ? (
+          <Swiper
+            spaceBetween={30}
+            slidesPerView={resize > 820 ? 4 : 1.2}
+            navigation={{ nextEl: ".right-btn", prevEl: ".left-btn" }}
+            modules={[Navigation]}
+            className="mySwiper"
+          >
+            {projects.map((project) => (
+              <SwiperSlide key={project.id}>
+                <Link href={`/projects/${project.id}`} className="service-box  relative border border-stroke p-3 w-full h-[26rem] overflow-hidden rounded-2xl shadow-lg cursor-pointer flex justify-center items-center group transition-all duration-700 z-10">
+                  {/* Background image */}
+                  <img
+                    src={project.image || "/project-ex.png"}
+                    className="absolute h-full w-full top-0 left-0 object-cover rounded-2xl transition-transform duration-700 group-hover:scale-110 group-hover:rotate-1"
+                  />
 
-                {/* Overlay */}
-                <div
-                  className="z-20 absolute top-[50%] left-0 w-full h-full p-6 transition-all duration-700 group-hover:top-0 group-hover:bg-[#1f203c]/90"
-                  style={{
-                    backgroundImage:
-                      "linear-gradient(180deg, rgba(12, 3, 70, 0.4) -52.21%, #1F203C 59.67%)",
-                  }}
-                >
-                  <h3 className="service-text text-[1.3rem] text-white font-bold mb-2 transform transition-all duration-700 group-hover:translate-y-[-8px] group-hover:text-main">
-                    {data.title}
-                  </h3>
-                  <p className="service-text text-[0.9rem] text-gray-300 mb-3 opacity-90 transition-all duration-700 group-hover:translate-y-[-6px] group-hover:text-white">
-                    {data.description}
-                  </p>
-                  <button className="service-text mt-2 text-white border-b border-b-white group-hover:text-main group-hover:border-main transition-colors duration-500">
-                    View details
-                  </button>
-                </div>
+                  {/* Overlay */}
+                  <div
+                    className="z-20 absolute top-[50%] left-0 w-full h-full p-6 transition-all duration-700 group-hover:top-0 group-hover:bg-[#1f203c]/90"
+                    style={{
+                      backgroundImage:
+                        "linear-gradient(180deg, rgba(12, 3, 70, 0.4) -52.21%, #1F203C 59.67%)",
+                    }}
+                  >
+                    <h3 className="service-text text-[1.3rem] text-white font-bold mb-2 transform transition-all duration-700 group-hover:translate-y-[-8px] group-hover:text-main">
+                      {project.title}
+                    </h3>
+                    <p className="service-text text-[0.9rem] text-gray-300 mb-3 opacity-90 transition-all duration-700 group-hover:translate-y-[-6px] group-hover:text-white line-clamp-3">
+                      {project.description}
+                    </p>
+                    {project.category && (
+                      <span className="text-xs text-main bg-main/20 px-2 py-1 rounded">
+                        {project.category}
+                      </span>
+                    )}
+                    <button className="service-text mt-2 block text-white border-b border-b-white group-hover:text-main group-hover:border-main transition-colors duration-500">
+                      View details
+                    </button>
+                  </div>
 
-                {/* Glow effect */}
-                <div className="absolute inset-0 rounded-2xl pointer-events-none opacity-0 group-hover:opacity-100 transition duration-700 group-hover:shadow-[0_0_35px_rgba(0,200,255,0.6)]"></div>
-              </Link>
-            </SwiperSlide>
-          ))}
-        </Swiper>
+                  {/* Glow effect */}
+                  <div className="absolute inset-0 rounded-2xl pointer-events-none opacity-0 group-hover:opacity-100 transition duration-700 group-hover:shadow-[0_0_35px_rgba(0,200,255,0.6)]"></div>
+                </Link>
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        ) : (
+          <p className="text-white/60 text-center py-12">No projects available</p>
+        )}
       </div>
     </div>
   );
