@@ -1,0 +1,8 @@
+.SideBar{
+  width: calc(150px + 8vw);
+  height: 1000px;
+  background-image: url("../../../Assets/sidebar.svg") ;
+  background-repeat: no-repeat;
+  background-position: start;
+  background-size: 100% ;
+}

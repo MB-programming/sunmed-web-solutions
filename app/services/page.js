@@ -15,6 +15,7 @@ gsap.registerPlugin(ScrollTrigger);
 
 const Page = () => {
   const aboutRef = useRef(null);
+  
 
   useGSAP(() => {
     const ctx = gsap.context(() => {

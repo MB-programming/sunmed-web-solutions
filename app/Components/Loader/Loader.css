@@ -1,0 +1,41 @@
+/* Add to your global CSS or Tailwind config */
+@keyframes wave {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(0.3); }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes spin-reverse {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(-360deg); }
+}
+
+.animate-wave {
+  animation: wave 1.2s ease-in-out infinite;
+}
+
+.animate-spin-slow {
+  animation: spin-slow 3s linear infinite;
+}
+
+.animate-spin-reverse {
+  animation: spin-reverse 2s linear infinite;
+}
+
+.loading-dots .dot {
+  opacity: 0;
+  animation: dot-blink 1.4s infinite;
+}
+
+.loading-dots .dot:nth-child(1) { animation-delay: 0.2s; }
+.loading-dots .dot:nth-child(2) { animation-delay: 0.4s; }
+.loading-dots .dot:nth-child(3) { animation-delay: 0.6s; }
+
+@keyframes dot-blink {
+  0%, 80%, 100% { opacity: 0; }
+  40% { opacity: 1; }
+}
